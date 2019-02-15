@@ -1,0 +1,70 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mattermost-informer
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "replicationcontrollers"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mattermost-informer
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: mattermost-informer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: mattermost-informer
+subjects:
+  - kind: ServiceAccount
+    name: mattermost-informer
+    namespace: default
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mattermost-informer
+spec:
+  serviceAccountName: mattermost-informer
+  restartPolicy: Always
+  containers:
+    - image: lnsp/mattermost-informer
+      name: informer
+      imagePullPolicy: Always
+      env:
+        - name: MATTERMOST_CHANNEL
+          valueFrom:
+            configMapKeyRef:
+              name: mattermost-informer-cfg
+              key: channel
+        - name: MATTERMOST_USER
+          valueFrom:
+            configMapKeyRef:
+              name: mattermost-informer-cfg
+              key: user
+        - name: MATTERMOST_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: mattermost-informer-cfg
+              key: password
+        - name: MATTERMOST_TEAM
+          valueFrom:
+            configMapKeyRef:
+              name: mattermost-informer-cfg
+              key: team
+        - name: MATTERMOST_URL
+          valueFrom:
+            configMapKeyRef:
+              name: mattermost-informer-cfg
+              key: url
+      resources:
+        limits:
+          cpu: "100m"
+          memory: "128M"
