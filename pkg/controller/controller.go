@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/mattermost/mattermost-server/model"
@@ -25,8 +26,11 @@ type Controller struct {
 	informer   cache.Controller
 	mattermost *utils.MattermostClient
 	clientset  kubernetes.Interface
+
+	timeouts map[string]time.Time
 }
 
+// NewController instantiates a new controller.
 func NewController(clientset kubernetes.Interface, mattermost *utils.MattermostClient, queue workqueue.RateLimitingInterface, indexer cache.Indexer, informer cache.Controller) *Controller {
 	return &Controller{
 		clientset:  clientset,
@@ -34,6 +38,7 @@ func NewController(clientset kubernetes.Interface, mattermost *utils.MattermostC
 		informer:   informer,
 		indexer:    indexer,
 		queue:      queue,
+		timeouts:   make(map[string]time.Time),
 	}
 }
 
@@ -55,41 +60,73 @@ func (c *Controller) processNextItem() bool {
 	return true
 }
 
-func hasValidAnnotation(pod *v1.Pod) bool {
-	return pod.GetObjectMeta().GetAnnotations()["mattermost"] == "inform"
+const (
+	annotationEnableMattermost       = "espe.tech/mattermost"
+	annotationEnableMattermostInform = "inform"
+)
+
+func (c *Controller) hasValidAnnotation(pod *v1.Pod) bool {
+	return pod.GetObjectMeta().GetAnnotations()[annotationEnableMattermost] == annotationEnableMattermostInform
+}
+
+const (
+	annotationMattermostBackoff        = "espe.tech/mattermost-backoff"
+	annotationMattermostBackoffDefault = time.Minute * 10
+)
+
+func (c *Controller) refreshBackoff(pod *v1.Pod, container *v1.ContainerStatus) bool {
+	backoff := annotationMattermostBackoffDefault
+	if backoffVal := pod.GetObjectMeta().GetAnnotations()[annotationMattermostBackoff]; backoffVal != "" {
+		if seconds, err := strconv.Atoi(backoffVal); err != nil {
+			backoff = time.Duration(seconds) * time.Second
+		}
+	}
+	if time.Since(c.timeouts[pod.GetName()]) < backoff {
+		return false
+	}
+	c.timeouts[pod.GetName()] = time.Now()
+	return true
+}
+
+func (c *Controller) clearTimeout(pod *v1.Pod) {
+	delete(c.timeouts, pod.GetName())
+}
+
+func (c *Controller) sendCrashNotification(pod *v1.Pod, container *v1.ContainerStatus) {
+	logs, _ := c.clientset.
+		CoreV1().Pods(pod.Namespace).
+		GetLogs(pod.Name, &v1.PodLogOptions{Container: container.Name}).Do().Raw()
+	message := fmt.Sprintf("Container %s of pod %s keeps crashing, maybe its time to intervene.", container.Name, pod.Name)
+	attachment := &model.SlackAttachment{
+		Color: "#AD2200",
+		Text:  message,
+		Title: "Crash loop detected!",
+		Fields: []*model.SlackAttachmentField{
+			{
+				Title: "Logs",
+				Value: "```\n" + string(logs) + "\n```",
+			},
+		},
+	}
+	// Check for termination message
+	if container.LastTerminationState.Terminated != nil {
+		attachment.Fields = append(attachment.Fields, &model.SlackAttachmentField{
+			Title: "Reason",
+			Value: container.LastTerminationState.Terminated.Reason,
+		})
+	}
+	c.mattermost.SendAttachements(attachment)
 }
 
 func (c *Controller) handlePodUpdate(pod *v1.Pod) {
 	for _, container := range pod.Status.ContainerStatuses {
-		if !container.Ready && container.State.Waiting != nil && hasValidAnnotation(pod) {
-			var attachment *model.SlackAttachment
+		if !container.Ready && container.State.Waiting != nil && c.hasValidAnnotation(pod) {
 			switch container.State.Waiting.Reason {
 			case "CrashLoopBackOff":
-				logs, _ := c.clientset.
-					CoreV1().Pods(pod.Namespace).
-					GetLogs(pod.Name, &v1.PodLogOptions{}).Do().Raw()
-				message := fmt.Sprintf("Container %s of pod %s keeps crashing, maybe its time to intervene.", container.Name, pod.Name)
-				attachment = &model.SlackAttachment{
-					Color: "#AD2200",
-					Text:  message,
-					Title: "Crash loop detected!",
-					Fields: []*model.SlackAttachmentField{
-						{
-							Title: "Logs",
-							Value: "```\n" + string(logs) + "\n```",
-						},
-					},
+				if !c.refreshBackoff(pod, &container) {
+					continue
 				}
-				// Check for termination message
-				if container.LastTerminationState.Terminated != nil {
-					attachment.Fields = append(attachment.Fields, &model.SlackAttachmentField{
-						Title: "Reason",
-						Value: container.LastTerminationState.Terminated.Reason,
-					})
-				}
-			}
-			if attachment != nil {
-				c.mattermost.SendAttachements(attachment)
+				c.sendCrashNotification(pod, &container)
 			}
 		}
 	}
@@ -107,6 +144,8 @@ func (c *Controller) syncToStdout(key string) error {
 	if !exists {
 		// Below we will warm up our cache with a Pod, so that we will see a delete for one pod
 		klog.Infof("Pod %s does not exist anymore\n", key)
+		// Clean up intervals
+		c.clearTimeout(obj.(*v1.Pod))
 	} else {
 		klog.Infof("Received create/update/delete for Pod %s\n", key)
 		// Note that you also have to check the uid if you have a local controlled resource, which
