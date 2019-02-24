@@ -27,44 +27,53 @@ subjects:
     name: mattermost-informer
     namespace: default
 ---
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: mattermost-informer
+  namespace: default
 spec:
-  serviceAccountName: mattermost-informer
-  restartPolicy: Always
-  containers:
-    - image: lnsp/mattermost-informer
-      name: informer
-      imagePullPolicy: Always
-      env:
-        - name: MATTERMOST_CHANNEL
-          valueFrom:
-            configMapKeyRef:
-              name: mattermost-informer-cfg
-              key: channel
-        - name: MATTERMOST_USER
-          valueFrom:
-            configMapKeyRef:
-              name: mattermost-informer-cfg
-              key: user
-        - name: MATTERMOST_PASSWORD
-          valueFrom:
-            configMapKeyRef:
-              name: mattermost-informer-cfg
-              key: password
-        - name: MATTERMOST_TEAM
-          valueFrom:
-            configMapKeyRef:
-              name: mattermost-informer-cfg
-              key: team
-        - name: MATTERMOST_URL
-          valueFrom:
-            configMapKeyRef:
-              name: mattermost-informer-cfg
-              key: url
-      resources:
-        limits:
-          cpu: "100m"
-          memory: "128M"
+  selector:
+    matchLabels:
+      app: mattermost-informer
+  template:
+    metadata:
+      labels:
+        app: mattermost-informer
+    spec:
+      restartPolicy: Always
+      serviceAccountName: mattermost-informer
+      containers:
+      - name: informer
+        image: lnsp/mattermost-informer
+        imagePullPolicy: Always
+        env:
+          - name: MATTERMOST_CHANNEL
+            valueFrom:
+              configMapKeyRef:
+                name: mattermost-informer-cfg
+                key: channel
+          - name: MATTERMOST_USER
+            valueFrom:
+              configMapKeyRef:
+                name: mattermost-informer-cfg
+                key: user
+          - name: MATTERMOST_PASSWORD
+            valueFrom:
+              configMapKeyRef:
+                name: mattermost-informer-cfg
+                key: password
+          - name: MATTERMOST_TEAM
+            valueFrom:
+              configMapKeyRef:
+                name: mattermost-informer-cfg
+                key: team
+          - name: MATTERMOST_URL
+            valueFrom:
+              configMapKeyRef:
+                name: mattermost-informer-cfg
+                key: url
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
