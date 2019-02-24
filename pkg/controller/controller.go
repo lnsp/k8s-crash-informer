@@ -104,7 +104,7 @@ func (c *Controller) sendCrashNotification(pod *v1.Pod, container *v1.ContainerS
 		Fields: []*model.SlackAttachmentField{
 			{
 				Title: "Logs",
-				Value: "```\n" + string(logs) + "\n```",
+				Value: "```\n" + string(logs) + "```",
 			},
 		},
 	}
