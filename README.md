@@ -36,3 +36,7 @@ annotations:
 ```
 
 You may optionally set the backoff interval in seconds using `espe.tech/mattermost-backoff`.
+
+### Step 4: Get notified!
+
+![Notification in Mattermost](https://i.imgur.com/BzJnaRr.png)
