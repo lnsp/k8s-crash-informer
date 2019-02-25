@@ -144,8 +144,10 @@ func (c *Controller) syncToStdout(key string) error {
 	if !exists {
 		// Below we will warm up our cache with a Pod, so that we will see a delete for one pod
 		klog.Infof("Pod %s does not exist anymore\n", key)
-		// Clean up intervals
-		c.clearTimeout(obj.(*v1.Pod))
+		// Clean up intervals if possible
+		if obj != nil {
+			c.clearTimeout(obj.(*v1.Pod))
+		}
 	} else {
 		klog.Infof("Received create/update/delete for Pod %s\n", key)
 		// Note that you also have to check the uid if you have a local controlled resource, which
