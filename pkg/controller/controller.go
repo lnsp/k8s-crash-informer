@@ -5,9 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mattermost/mattermost-server/model"
-
 	"github.com/lnsp/mattermost-informer/pkg/client"
+	"github.com/lnsp/mattermost-informer/pkg/informer"
 	"github.com/lnsp/mattermost-informer/pkg/utils"
 	"k8s.io/klog"
 
@@ -21,24 +20,24 @@ import (
 )
 
 type Controller struct {
-	indexer    cache.Indexer
-	queue      workqueue.RateLimitingInterface
-	informer   cache.Controller
-	mattermost *utils.MattermostClient
-	clientset  kubernetes.Interface
+	queue           workqueue.RateLimitingInterface
+	cacheIndexer    cache.Indexer
+	cacheController cache.Controller
+	chat            informer.Informer
+	clientset       kubernetes.Interface
 
 	timeouts map[string]time.Time
 }
 
 // NewController instantiates a new controller.
-func NewController(clientset kubernetes.Interface, mattermost *utils.MattermostClient, queue workqueue.RateLimitingInterface, indexer cache.Indexer, informer cache.Controller) *Controller {
+func NewController(clientset kubernetes.Interface, chat informer.Informer, queue workqueue.RateLimitingInterface, indexer cache.Indexer, informer cache.Controller) *Controller {
 	return &Controller{
-		clientset:  clientset,
-		mattermost: mattermost,
-		informer:   informer,
-		indexer:    indexer,
-		queue:      queue,
-		timeouts:   make(map[string]time.Time),
+		clientset:       clientset,
+		chat:            chat,
+		cacheController: informer,
+		cacheIndexer:    indexer,
+		queue:           queue,
+		timeouts:        make(map[string]time.Time),
 	}
 }
 
@@ -77,9 +76,12 @@ const (
 func (c *Controller) refreshBackoff(pod *v1.Pod, container *v1.ContainerStatus) bool {
 	backoff := annotationMattermostBackoffDefault
 	if backoffVal := pod.GetObjectMeta().GetAnnotations()[annotationMattermostBackoff]; backoffVal != "" {
-		if seconds, err := strconv.Atoi(backoffVal); err != nil {
-			backoff = time.Duration(seconds) * time.Second
+		seconds, err := strconv.Atoi(backoffVal)
+		if err != nil {
+			klog.Warningf("Pod %s has invalid backoff interval: '%s'", pod.GetName(), backoffVal)
+			return false
 		}
+		backoff = time.Duration(seconds) * time.Second
 	}
 	if time.Since(c.timeouts[pod.GetName()]) < backoff {
 		return false
@@ -97,25 +99,15 @@ func (c *Controller) sendCrashNotification(pod *v1.Pod, container *v1.ContainerS
 		CoreV1().Pods(pod.Namespace).
 		GetLogs(pod.Name, &v1.PodLogOptions{Container: container.Name}).Do().Raw()
 	message := fmt.Sprintf("Container %s of pod %s keeps crashing, maybe its time to intervene.", container.Name, pod.Name)
-	attachment := &model.SlackAttachment{
-		Color: "#AD2200",
-		Text:  message,
-		Title: "Crash loop detected!",
-		Fields: []*model.SlackAttachmentField{
-			{
-				Title: "Logs",
-				Value: "```\n" + string(logs) + "```",
-			},
-		},
+	note := &informer.CrashNotification{
+		Title:   "Crash loop detected!",
+		Message: message,
+		Logs:    string(logs),
 	}
-	// Check for termination message
 	if container.LastTerminationState.Terminated != nil {
-		attachment.Fields = append(attachment.Fields, &model.SlackAttachmentField{
-			Title: "Reason",
-			Value: container.LastTerminationState.Terminated.Reason,
-		})
+		note.Reason = container.LastTerminationState.Terminated.Reason
 	}
-	c.mattermost.SendAttachements(attachment)
+	c.chat.Inform(note)
 }
 
 func (c *Controller) handlePodUpdate(pod *v1.Pod) {
@@ -136,7 +128,7 @@ func (c *Controller) handlePodUpdate(pod *v1.Pod) {
 // information about the pod to stdout. In case an error happened, it has to simply return the error.
 // The retry logic should not be part of the business logic.
 func (c *Controller) syncToStdout(key string) error {
-	obj, exists, err := c.indexer.GetByKey(key)
+	obj, exists, err := c.cacheIndexer.GetByKey(key)
 	if err != nil {
 		klog.Errorf("Fetching object with key %s from store failed with %v", key, err)
 		return err
@@ -190,10 +182,10 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) {
 	defer c.queue.ShutDown()
 	klog.Info("Starting Pod controller")
 
-	go c.informer.Run(stopCh)
+	go c.cacheController.Run(stopCh)
 
 	// Wait for all involved caches to be synced, before processing items from the queue is started
-	if !cache.WaitForCacheSync(stopCh, c.informer.HasSynced) {
+	if !cache.WaitForCacheSync(stopCh, c.cacheController.HasSynced) {
 		runtime.HandleError(fmt.Errorf("Timed out waiting for caches to sync"))
 		return
 	}
@@ -212,7 +204,7 @@ func (c *Controller) runWorker() {
 }
 
 func Run() {
-	mattermost, err := utils.NewMattermostClient()
+	mattermost, err := informer.NewMattermostInformerFromEnv()
 	if err != nil {
 		klog.Fatal(err)
 	}
