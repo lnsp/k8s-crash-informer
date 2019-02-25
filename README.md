@@ -22,7 +22,7 @@ This step is required to create a valid configuration for our Mattermost informe
 
 ### Step 2: Deploy the informer
 ```bash
-$ kubectl apply -f informer.yaml
+$ kubectl apply -f manifests/informer.yaml
 ```
 
 You may want to update the `namespace` references, since the informer only watches a given namespace.
