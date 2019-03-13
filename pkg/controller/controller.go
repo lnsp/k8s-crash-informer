@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/lnsp/mattermost-informer/pkg/client"
-	"github.com/lnsp/mattermost-informer/pkg/informer"
-	"github.com/lnsp/mattermost-informer/pkg/utils"
+	"github.com/lnsp/k8s-mattermost-informer/pkg/client"
+	"github.com/lnsp/k8s-mattermost-informer/pkg/informer"
+	"github.com/lnsp/k8s-mattermost-informer/pkg/utils"
 	"k8s.io/klog"
 
 	"k8s.io/api/core/v1"
@@ -203,12 +203,8 @@ func (c *Controller) runWorker() {
 	}
 }
 
-func Run() {
-	mattermost, err := informer.NewMattermostInformerFromEnv()
-	if err != nil {
-		klog.Fatal(err)
-	}
 
+func Run(chatInformer informer.Informer) {
 	clientset, err := client.InCluster()
 	if err != nil {
 		klog.Fatal(err)
@@ -253,7 +249,7 @@ func Run() {
 		},
 	}, cache.Indexers{})
 
-	controller := NewController(clientset, mattermost, queue, indexer, informer)
+	controller := NewController(clientset, chatInformer, queue, indexer, informer)
 
 	stop := make(chan struct{})
 	defer close(stop)
