@@ -5,12 +5,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/lnsp/k8s-crash-informer/pkg/chat"
 	"github.com/lnsp/k8s-crash-informer/pkg/client"
-	"github.com/lnsp/k8s-crash-informer/pkg/informer"
 	"github.com/lnsp/k8s-crash-informer/pkg/utils"
 	"k8s.io/klog"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -23,14 +23,14 @@ type Controller struct {
 	queue           workqueue.RateLimitingInterface
 	cacheIndexer    cache.Indexer
 	cacheController cache.Controller
-	chat            informer.Informer
+	chat            chat.Client
 	clientset       kubernetes.Interface
 
 	timeouts map[string]time.Time
 }
 
 // NewController instantiates a new controller.
-func NewController(clientset kubernetes.Interface, chat informer.Informer, queue workqueue.RateLimitingInterface, indexer cache.Indexer, informer cache.Controller) *Controller {
+func NewController(clientset kubernetes.Interface, chat chat.Client, queue workqueue.RateLimitingInterface, indexer cache.Indexer, informer cache.Controller) *Controller {
 	return &Controller{
 		clientset:       clientset,
 		chat:            chat,
@@ -60,8 +60,8 @@ func (c *Controller) processNextItem() bool {
 }
 
 const (
-	annotationEnableMattermost       = "espe.tech/mattermost"
-	annotationEnableMattermostInform = "inform"
+	annotationEnableMattermost       = "espe.tech/crash-notify"
+	annotationEnableMattermostInform = "true"
 )
 
 func (c *Controller) hasValidAnnotation(pod *v1.Pod) bool {
@@ -69,7 +69,7 @@ func (c *Controller) hasValidAnnotation(pod *v1.Pod) bool {
 }
 
 const (
-	annotationMattermostBackoff        = "espe.tech/mattermost-backoff"
+	annotationMattermostBackoff        = "espe.tech/notify-backoff"
 	annotationMattermostBackoffDefault = time.Minute * 10
 )
 
@@ -99,7 +99,7 @@ func (c *Controller) sendCrashNotification(pod *v1.Pod, container *v1.ContainerS
 		CoreV1().Pods(pod.Namespace).
 		GetLogs(pod.Name, &v1.PodLogOptions{Container: container.Name}).Do().Raw()
 	message := fmt.Sprintf("Container %s of pod %s keeps crashing, maybe its time to intervene.", container.Name, pod.Name)
-	note := &informer.CrashNotification{
+	note := &chat.CrashNotification{
 		Title:   "Crash loop detected!",
 		Message: message,
 		Logs:    string(logs),
@@ -107,7 +107,7 @@ func (c *Controller) sendCrashNotification(pod *v1.Pod, container *v1.ContainerS
 	if container.LastTerminationState.Terminated != nil {
 		note.Reason = container.LastTerminationState.Terminated.Reason
 	}
-	c.chat.Inform(note)
+	c.chat.Send(note)
 }
 
 func (c *Controller) handlePodUpdate(pod *v1.Pod) {
@@ -203,8 +203,12 @@ func (c *Controller) runWorker() {
 	}
 }
 
+func Run() {
+	chat, err := chat.NewClientFromEnv()
+	if err != nil {
+		klog.Fatal(err)
+	}
 
-func Run(chatInformer informer.Informer) {
 	clientset, err := client.InCluster()
 	if err != nil {
 		klog.Fatal(err)
@@ -249,7 +253,7 @@ func Run(chatInformer informer.Informer) {
 		},
 	}, cache.Indexers{})
 
-	controller := NewController(clientset, chatInformer, queue, indexer, informer)
+	controller := NewController(clientset, chat, queue, indexer, informer)
 
 	stop := make(chan struct{})
 	defer close(stop)

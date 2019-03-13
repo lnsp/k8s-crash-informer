@@ -1,9 +1,10 @@
-package informer
+package chat
 
 import (
 	"github.com/kelseyhightower/envconfig"
 	"github.com/mattermost/mattermost-server/model"
 	"github.com/nlopes/slack"
+	"github.com/pkg/errors"
 )
 
 // CrashNotification contains all data to print out a informative crash note.
@@ -14,9 +15,9 @@ type CrashNotification struct {
 	Logs    string
 }
 
-// Informer informs a communication channel about a crash.
-type Informer interface {
-	Inform(*CrashNotification)
+// Client informs a communication channel about a crash.
+type Client interface {
+	Send(*CrashNotification)
 }
 
 type MattermostConfig struct {
@@ -26,14 +27,14 @@ type MattermostConfig struct {
 	Team, Channel string
 }
 
-type MattermostInformer struct {
+type MattermostClient struct {
 	mattermost *model.Client4
 	user       *model.User
 	channel    *model.Channel
 }
 
-// Inform constructs a new mattermost message containing information about the crash.
-func (informer *MattermostInformer) Inform(note *CrashNotification) {
+// Send constructs a new mattermost message containing information about the crash.
+func (client *MattermostClient) Send(note *CrashNotification) {
 	attachment := &model.SlackAttachment{
 		Color: "#AD2200",
 		Text:  note.Message,
@@ -52,25 +53,36 @@ func (informer *MattermostInformer) Inform(note *CrashNotification) {
 			Value: note.Reason,
 		})
 	}
-	informer.sendAttachments(attachment)
+	client.sendAttachments(attachment)
 }
 
-func (informer *MattermostInformer) sendAttachments(attachements ...*model.SlackAttachment) {
-	post := &model.Post{ChannelId: informer.channel.Id}
+func (client *MattermostClient) sendAttachments(attachements ...*model.SlackAttachment) {
+	post := &model.Post{ChannelId: client.channel.Id}
 	model.ParseSlackAttachment(post, attachements)
-	informer.mattermost.CreatePost(post)
+	client.mattermost.CreatePost(post)
 }
 
-func (informer *MattermostInformer) Send(msg string) {
-	post := &model.Post{
-		ChannelId: informer.channel.Id,
-		Message:   msg,
+type ClientConfig struct {
+	Type string `default:"mattermost"`
+}
+
+// NewClientFromEnv instantiates a new chat client using env configuration.
+func NewClientFromEnv() (Client, error) {
+	var cfg ClientConfig
+	if err := envconfig.Process("informer", &cfg); err != nil {
+		return nil, err
 	}
-	informer.mattermost.CreatePost(post)
+	switch cfg.Type {
+	case "mattermost":
+		return NewMattermostClientFromEnv()
+	case "slack":
+		return NewSlackClientFromEnv()
+	}
+	return nil, errors.Errorf("unknown client type: %v", cfg.Type)
 }
 
-// NewMattermostInformerFromEnv instantiates and configures a Mattermost informer.
-func NewMattermostInformerFromEnv() (*MattermostInformer, error) {
+// NewMattermostClientFromEnv instantiates and configures a Mattermost client.
+func NewMattermostClientFromEnv() (*MattermostClient, error) {
 	var cfg MattermostConfig
 	if err := envconfig.Process("mattermost", &cfg); err != nil {
 		return nil, err
@@ -88,7 +100,7 @@ func NewMattermostInformerFromEnv() (*MattermostInformer, error) {
 	if resp.Error != nil {
 		return nil, resp.Error
 	}
-	return &MattermostInformer{client, user, channel}, nil
+	return &MattermostClient{client, user, channel}, nil
 }
 
 type SlackConfig struct {
@@ -96,12 +108,12 @@ type SlackConfig struct {
 	Channel string
 }
 
-type SlackInformer struct {
+type SlackClient struct {
 	Client  *slack.Client
 	Channel string
 }
 
-func (informer *SlackInformer) Inform(note *CrashNotification) {
+func (client *SlackClient) Send(note *CrashNotification) {
 	attachment := slack.Attachment{
 		Color: "#AD2200",
 		Text:  note.Message,
@@ -119,21 +131,21 @@ func (informer *SlackInformer) Inform(note *CrashNotification) {
 			Value: note.Reason,
 		})
 	}
-	informer.sendAttachments(attachment)
+	client.sendAttachments(attachment)
 }
 
-func (informer *SlackInformer) sendAttachments(attachments ...slack.Attachment) {
-	informer.Client.SendMessage(informer.Channel, slack.MsgOptionAttachments(attachments...))
+func (client *SlackClient) sendAttachments(attachments ...slack.Attachment) {
+	client.Client.SendMessage(client.Channel, slack.MsgOptionAttachments(attachments...))
 }
 
-// NewSlackInformerFromEnv instantiates and configures a Slack informer.
-func NewSlackInformerFromEnv() (*SlackInformer, error) {
+// NewSlackClientFromEnv instantiates and configures a Slack client.
+func NewSlackClientFromEnv() (*SlackClient, error) {
 	var cfg SlackConfig
 	if err := envconfig.Process("slack", &cfg); err != nil {
 		return nil, err
 	}
 	api := slack.New(cfg.Token)
-	return &SlackInformer{
+	return &SlackClient{
 		Client:  api,
 		Channel: cfg.Channel,
 	}, nil
