@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"github.com/lnsp/k8s-mattermost-informer/pkg/controller"
+	"github.com/lnsp/k8s-mattermost-informer/pkg/informer"
 	"github.com/spf13/cobra"
+	"k8s.io/klog"
 )
 
 var rootCmd = &cobra.Command{
@@ -11,9 +13,8 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var (
 			chat informer.Informer
-			err error
+			err  error
 		)
-		var chat informer.Inforner
 		switch Target {
 		case "mattermost":
 			chat, err = informer.NewMattermostInformerFromEnv()
@@ -27,8 +28,10 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+// Target is the notification target of this informer service.
 var Target string
+
 func Execute() {
 	rootCmd.Execute()
-	rootCmd.Flags().StringVarP(&Target, "target", "t", "mattermost", "set notification target system")
+	rootCmd.Flags().StringVarP(&Target, "target", "t", "mattermost", "Notification target of informer service")
 }
