@@ -1,7 +1,9 @@
 package main
 
-import "github.com/lnsp/k8s-crash-informer/cmd"
+import (
+	"github.com/lnsp/k8s-crash-informer/pkg/controller"
+)
 
 func main() {
-	cmd.Execute()
+	controller.Run()
 }
