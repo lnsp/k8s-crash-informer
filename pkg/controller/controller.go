@@ -204,11 +204,14 @@ func (c *Controller) runWorker() {
 }
 
 func Run() {
+	klog.InitFlags(nil)
+
 	chat, err := chat.NewClientFromEnv()
 	if err != nil {
 		klog.Fatal(err)
 	}
 
+	klog.Info("Chat client configuration successful")
 	clientset, err := client.InCluster()
 	if err != nil {
 		klog.Fatal(err)
