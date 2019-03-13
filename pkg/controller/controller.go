@@ -60,7 +60,7 @@ func (c *Controller) processNextItem() bool {
 }
 
 const (
-	annotationEnableMattermost       = "espe.tech/crash-notify"
+	annotationEnableMattermost       = "espe.tech/crash-informer"
 	annotationEnableMattermostInform = "true"
 )
 
@@ -69,7 +69,7 @@ func (c *Controller) hasValidAnnotation(pod *v1.Pod) bool {
 }
 
 const (
-	annotationMattermostBackoff        = "espe.tech/notify-backoff"
+	annotationMattermostBackoff        = "espe.tech/informer-backoff"
 	annotationMattermostBackoffDefault = time.Minute * 10
 )
 

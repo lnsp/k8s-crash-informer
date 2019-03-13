@@ -48,10 +48,10 @@ To begin watching pods, you only have to add the following annotation to the pod
 
 ```yaml
 annotations:
-  espe.tech/crash-notify: true
+  espe.tech/crash-informer: true
 ```
 
-You may optionally set the backoff interval in seconds using `espe.tech/notify-backoff`.
+You may optionally set the backoff interval in seconds using `espe.tech/informer-backoff`.
 
 ### Step 4: Get notified!
 
