@@ -4,7 +4,8 @@ This Kubernetes controller informs you when a Kubernetes Pod repeatedly dies (`C
 
 ## Usage
 
-### Step 1a: Add a config map for the Mattermost Informer
+### Step 1: Add a config map for the informer
+##### For Mattermost, you should use
 ```yaml
 apiVersion: v1
 data:
@@ -18,7 +19,7 @@ metadata:
   name: crash-informer-cfg
 ```
 
-### Step 1b: Add a config map for the Mattermost Informer
+##### If you use Slack, use
 ```yaml
 apiVersion: v1
 data:
@@ -33,8 +34,11 @@ This step is required to create a valid configuration for our crash informer.
 
 ### Step 2: Deploy the informer
 ```bash
-$ kubectl apply -f manifests/mattermost-informer.yaml # for Mattermost
-$ kubectl apply -f manifests/slack-informer.yaml # for Slack
+# If you use Mattermost
+kubectl apply -f manifests/mattermost-informer.yaml
+
+# If you use Slack
+kubectl apply -f manifests/slack-informer.yaml
 ```
 
 You may want to update the `namespace` references, since the informer only watches a given namespace.
