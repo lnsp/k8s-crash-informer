@@ -1,7 +1,7 @@
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: mattermost-informer
+  name: crash-informer
   namespace: default
 rules:
 - apiGroups: [""]
@@ -11,67 +11,67 @@ rules:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: mattermost-informer
+  name: crash-informer
   namespace: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: RoleBinding
 metadata:
-  name: mattermost-informer
+  name: crash-informer
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: mattermost-informer
+  name: crash-informer
 subjects:
   - kind: ServiceAccount
-    name: mattermost-informer
+    name: crash-informer
     namespace: default
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mattermost-informer
+  name: crash-informer
   namespace: default
 spec:
   selector:
     matchLabels:
-      app: mattermost-informer
+      app: crash-informer
   template:
     metadata:
       labels:
-        app: mattermost-informer
+        app: crash-informer
     spec:
       restartPolicy: Always
-      serviceAccountName: mattermost-informer
+      serviceAccountName: crash-informer
       containers:
       - name: informer
-        image: lnsp/mattermost-informer
+        image: lnsp/crash-informer
         imagePullPolicy: Always
         env:
           - name: MATTERMOST_CHANNEL
             valueFrom:
               configMapKeyRef:
-                name: mattermost-informer-cfg
+                name: crash-informer-cfg
                 key: channel
           - name: MATTERMOST_USER
             valueFrom:
               configMapKeyRef:
-                name: mattermost-informer-cfg
+                name: crash-informer-cfg
                 key: user
           - name: MATTERMOST_PASSWORD
             valueFrom:
               configMapKeyRef:
-                name: mattermost-informer-cfg
+                name: crash-informer-cfg
                 key: password
           - name: MATTERMOST_TEAM
             valueFrom:
               configMapKeyRef:
-                name: mattermost-informer-cfg
+                name: crash-informer-cfg
                 key: team
           - name: MATTERMOST_URL
             valueFrom:
               configMapKeyRef:
-                name: mattermost-informer-cfg
+                name: crash-informer-cfg
                 key: url
         resources:
           limits:

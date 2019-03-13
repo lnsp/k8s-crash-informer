@@ -1,4 +1,4 @@
-module github.com/lnsp/k8s-mattermost-informer
+module github.com/lnsp/k8s-crash-informer
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect

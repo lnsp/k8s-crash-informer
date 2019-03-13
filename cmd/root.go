@@ -1,14 +1,14 @@
 package cmd
 
 import (
-	"github.com/lnsp/k8s-mattermost-informer/pkg/controller"
-	"github.com/lnsp/k8s-mattermost-informer/pkg/informer"
+	"github.com/lnsp/k8s-crash-informer/pkg/controller"
+	"github.com/lnsp/k8s-crash-informer/pkg/informer"
 	"github.com/spf13/cobra"
 	"k8s.io/klog"
 )
 
 var rootCmd = &cobra.Command{
-	Use:  "mattermost-informer",
+	Use:  "crash-informer",
 	Long: "Broadcast pod crashes to a Mattermost channel",
 	Run: func(cmd *cobra.Command, args []string) {
 		var (

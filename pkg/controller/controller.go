@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/lnsp/k8s-mattermost-informer/pkg/client"
-	"github.com/lnsp/k8s-mattermost-informer/pkg/informer"
-	"github.com/lnsp/k8s-mattermost-informer/pkg/utils"
+	"github.com/lnsp/k8s-crash-informer/pkg/client"
+	"github.com/lnsp/k8s-crash-informer/pkg/informer"
+	"github.com/lnsp/k8s-crash-informer/pkg/utils"
 	"k8s.io/klog"
 
 	"k8s.io/api/core/v1"

@@ -1,4 +1,4 @@
-# k8s-mattermost-informer
+# k8s-crash-informer
 
 This Kubernetes controller informs you when a Kubernetes Pod repeatedly dies (`CrashLoopBackOff`) while providing additional information like exit code and logs. **This is my first attempt at writing a Kubernetes controller, if you have any feedback please open an issue.**
 
@@ -15,7 +15,7 @@ data:
   user: <your-user>
 kind: ConfigMap
 metadata:
-  name: mattermost-informer-cfg
+  name: crash-informer-cfg
 ```
 
 This step is required to create a valid configuration for our Mattermost informer.
