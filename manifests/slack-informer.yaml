@@ -30,16 +30,16 @@ subjects:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: crash-informer
+  name: slack-informerr
   namespace: default
 spec:
   selector:
     matchLabels:
-      app: crash-informer
+      app: slack-informerr
   template:
     metadata:
       labels:
-        app: crash-informer
+        app: slack-informerr
     spec:
       restartPolicy: Always
       serviceAccountName: crash-informer
@@ -51,12 +51,12 @@ spec:
           - name: SLACK_CHANNEL
             valueFrom:
               configMapKeyRef:
-                name: crash-informer-cfg
+                name: slack-informer-cfg
                 key: channel
           - name: SLACK_TOKEN
             valueFrom:
               configMapKeyRef:
-                name: crash-informer-cfg
+                name: slack-informer-cfg
                 key: token
           - name: INFORMER_TYPE
             value: slack

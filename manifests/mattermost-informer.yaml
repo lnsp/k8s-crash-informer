@@ -30,16 +30,16 @@ subjects:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: crash-informer
+  name: mattermost-informerr
   namespace: default
 spec:
   selector:
     matchLabels:
-      app: crash-informer
+      app: mattermost-informerr
   template:
     metadata:
       labels:
-        app: crash-informer
+        app: mattermost-informerr
     spec:
       restartPolicy: Always
       serviceAccountName: crash-informer
@@ -51,27 +51,27 @@ spec:
           - name: MATTERMOST_CHANNEL
             valueFrom:
               configMapKeyRef:
-                name: crash-informer-cfg
+                name: mattermost-informer-cfg
                 key: channel
           - name: MATTERMOST_USER
             valueFrom:
               configMapKeyRef:
-                name: crash-informer-cfg
+                name: mattermost-informer-cfg
                 key: user
           - name: MATTERMOST_PASSWORD
             valueFrom:
               configMapKeyRef:
-                name: crash-informer-cfg
+                name: mattermost-informer-cfg
                 key: password
           - name: MATTERMOST_TEAM
             valueFrom:
               configMapKeyRef:
-                name: crash-informer-cfg
+                name: mattermost-informer-cfg
                 key: team
           - name: MATTERMOST_URL
             valueFrom:
               configMapKeyRef:
-                name: crash-informer-cfg
+                name: mattermost-informer-cfg
                 key: url
         resources:
           limits:
