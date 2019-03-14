@@ -16,8 +16,10 @@ data:
   user: <your-user>
 kind: ConfigMap
 metadata:
-  name: crash-informer-cfg
+  name: mattermost-informer-cfg
 ```
+
+You should supply the user credentials of the bot, server URL, team and channel.
 
 ##### If you use Slack, use
 ```yaml
@@ -27,8 +29,10 @@ data:
   token: <your-token>
 kind: ConfigMap
 metadata:
-  name: crash-informer-cfg
+  name: slack-informer-cfg
 ```
+
+You should use the Bot User OAuth Access Token as `token`. It can be copied from the Slack App admin interface after registering a new Slack API App and enabling the Bot feature.
 
 This step is required to create a valid configuration for our crash informer.
 
