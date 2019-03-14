@@ -5,6 +5,7 @@ import (
 	"github.com/mattermost/mattermost-server/model"
 	"github.com/nlopes/slack"
 	"github.com/pkg/errors"
+	"k8s.io/klog"
 )
 
 // CrashNotification contains all data to print out a informative crash note.
@@ -59,7 +60,10 @@ func (client *MattermostClient) Send(note *CrashNotification) {
 func (client *MattermostClient) sendAttachments(attachements ...*model.SlackAttachment) {
 	post := &model.Post{ChannelId: client.channel.Id}
 	model.ParseSlackAttachment(post, attachements)
-	client.mattermost.CreatePost(post)
+	_, resp := client.mattermost.CreatePost(post)
+	if resp.Error != nil {
+		klog.Warningf("Failed to notify Mattermost: %v", resp.Error)
+	}
 }
 
 type ClientConfig struct {
@@ -135,7 +139,10 @@ func (client *SlackClient) Send(note *CrashNotification) {
 }
 
 func (client *SlackClient) sendAttachments(attachments ...slack.Attachment) {
-	client.Client.SendMessage(client.Channel, slack.MsgOptionAttachments(attachments...))
+	_, _, _, err := client.Client.SendMessage(client.Channel, slack.MsgOptionAttachments(attachments...))
+	if err != nil {
+		klog.Warningf("Failed to notify Slack: %v", err)
+	}
 }
 
 // NewSlackClientFromEnv instantiates and configures a Slack client.
