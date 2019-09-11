@@ -45,7 +45,7 @@ spec:
       serviceAccountName: crash-informer
       containers:
       - name: informer
-        image: lnsp/crash-informer
+        image: docker.pkg.github.com/lnsp/k8s-crash-informer/informer:latest
         imagePullPolicy: Always
         env:
           - name: MATTERMOST_CHANNEL
