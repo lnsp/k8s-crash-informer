@@ -18,7 +18,7 @@ jobs:
         USERNAME: ${{ secrets.DOCKER_USERNAME }}
         PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       run: |
-         PKGID=$REPOSITORY/lnsp/k8s-crash-informer:$(date +%s) \
-         docker login -u $USERNAME -p $PASSWORD $REPOSITORY && \
-         docker build -f Dockerfile -t $PKGID . && \
+         PKGID=$REPOSITORY/lnsp/k8s-crash-informer:$(date +%s)
+         docker login -u $USERNAME -p $PASSWORD $REPOSITORY
+         docker build -f Dockerfile -t $PKGID .
          docker push $PKGID
