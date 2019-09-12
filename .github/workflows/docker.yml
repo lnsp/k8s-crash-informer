@@ -12,9 +12,13 @@ jobs:
  
     steps:
     - uses: actions/checkout@v1
-    - name: Publish
-      uses: elgohr/Publish-Docker-Github-Action@master
-      with:
-        name: docker.pkg.github.com/lnsp/k8s-crash-informer/informer:$(date +%s)
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Docker
+      env:
+        REPOSITORY: docker.pkg.github.com
+        USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+         PKGID=$REPOSITORY/lnsp/k8s-crash-informer:$(date +%s) \
+         docker login -u $USERNAME -p $PASSWORD $REPOSITORY && \
+         docker build -f Dockerfile -t $PKGID . && \
+         docker push $PKGID
