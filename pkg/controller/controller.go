@@ -66,6 +66,7 @@ func (c *Controller) hasValidAnnotation(pod *v1.Pod) bool {
 		return false
 	}
 	rsAnnotations := rs.GetObjectMeta().GetAnnotations()
+	podAnnotations[annotationMattermostBackoff] = rsAnnotations[annotationMattermostBackoff]
 	if rsAnnotations[annotationEnableMattermost] == annotationEnableMattermostInform {
 		return true
 	}
@@ -75,6 +76,7 @@ func (c *Controller) hasValidAnnotation(pod *v1.Pod) bool {
 		return false
 	}
 	depAnnotations := dep.GetObjectMeta().GetAnnotations()
+	podAnnotations[annotationMattermostBackoff] = depAnnotations[annotationMattermostBackoff]
 	return depAnnotations[annotationEnableMattermost] == annotationEnableMattermostInform
 }
 
