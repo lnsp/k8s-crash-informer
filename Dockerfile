@@ -1,5 +1,5 @@
 FROM golang:alpine AS builder
-MAINTAINER "Lennart Espe <lennart@espe.tech>"
+LABEL maintainer="Lennart Espe <lennart@espe.tech>"
 
 RUN apk update && \
     apk add git build-base && \
@@ -7,8 +7,11 @@ RUN apk update && \
     mkdir -p "/build"
 
 WORKDIR /build
-COPY . /build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get -v . && go build -a --installsuffix cgo --ldflags="-s" -o informer
+COPY go.mod go.sum /build/
+RUN go mod download
+
+COPY . /build/
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a --installsuffix cgo --ldflags="-s" -o informer
 
 FROM alpine:3.4
 RUN apk add --update ca-certificates
