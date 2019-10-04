@@ -10,7 +10,9 @@ import (
 	"github.com/lnsp/k8s-crash-informer/pkg/utils"
 	"k8s.io/klog"
 
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -27,18 +29,6 @@ type Controller struct {
 	clientset       kubernetes.Interface
 
 	timeouts map[string]time.Time
-}
-
-// NewController instantiates a new controller.
-func NewController(clientset kubernetes.Interface, chat chat.Client, queue workqueue.RateLimitingInterface, indexer cache.Indexer, informer cache.Controller) *Controller {
-	return &Controller{
-		clientset:       clientset,
-		chat:            chat,
-		cacheController: informer,
-		cacheIndexer:    indexer,
-		queue:           queue,
-		timeouts:        make(map[string]time.Time),
-	}
 }
 
 func (c *Controller) processNextItem() bool {
@@ -65,7 +55,51 @@ const (
 )
 
 func (c *Controller) hasValidAnnotation(pod *v1.Pod) bool {
-	return pod.GetObjectMeta().GetAnnotations()[annotationEnableMattermost] == annotationEnableMattermostInform
+	podAnnotations := pod.GetObjectMeta().GetAnnotations()
+	if podAnnotations[annotationEnableMattermost] == annotationEnableMattermostInform {
+		return true
+	}
+	// Backtrack to deployment using ownerReferences
+	rs, err := c.findPodReplicaSet(pod)
+	if err != nil {
+		return false
+	}
+	rsAnnotations := rs.GetObjectMeta().GetAnnotations()
+	if rsAnnotations[annotationEnableMattermost] == annotationEnableMattermostInform {
+		return true
+	}
+	dep, err := c.findPodDeployment(pod, rs)
+	if err != nil {
+		return false
+	}
+	depAnnotations := dep.GetObjectMeta().GetAnnotations()
+	return depAnnotations[annotationEnableMattermost] == annotationEnableMattermostInform
+}
+
+func (c *Controller) findPodReplicaSet(pod *v1.Pod) (*appsv1.ReplicaSet, error) {
+	for _, ref := range pod.GetOwnerReferences() {
+		if ref.Kind == "ReplicaSet" {
+			rs, err := c.clientset.AppsV1().ReplicaSets(pod.Namespace).Get(ref.Name, metav1.GetOptions{})
+			if err != nil {
+				return nil, fmt.Errorf("failed to retrieve owner ref: %w", err)
+			}
+			return rs, nil
+		}
+	}
+	return nil, fmt.Errorf("replicaset not found")
+}
+
+func (c *Controller) findPodDeployment(pod *v1.Pod, rs *appsv1.ReplicaSet) (*appsv1.Deployment, error) {
+	for _, ref := range rs.GetOwnerReferences() {
+		if ref.Kind == "Deployment" {
+			dep, err := c.clientset.AppsV1().Deployments(pod.Namespace).Get(ref.Name, metav1.GetOptions{})
+			if err != nil {
+				return nil, fmt.Errorf("failed to retrieve owner ref: %w", err)
+			}
+			return dep, nil
+		}
+	}
+	return nil, fmt.Errorf("deployment not found")
 }
 
 const (
@@ -256,7 +290,14 @@ func Run() {
 		},
 	}, cache.Indexers{})
 
-	controller := NewController(clientset, chat, queue, indexer, informer)
+	controller := &Controller{
+		clientset:       clientset,
+		chat:            chat,
+		cacheIndexer:    indexer,
+		cacheController: informer,
+		queue:           queue,
+		timeouts:        make(map[string]time.Time),
+	}
 
 	stop := make(chan struct{})
 	defer close(stop)
