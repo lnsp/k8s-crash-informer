@@ -62,6 +62,7 @@ func (c *Controller) hasValidAnnotation(pod *v1.Pod) bool {
 	// Backtrack to deployment using ownerReferences
 	rs, err := c.findPodReplicaSet(pod)
 	if err != nil {
+		klog.Infof("Failed to get replicaset: %v", err)
 		return false
 	}
 	rsAnnotations := rs.GetObjectMeta().GetAnnotations()
@@ -70,6 +71,7 @@ func (c *Controller) hasValidAnnotation(pod *v1.Pod) bool {
 	}
 	dep, err := c.findPodDeployment(pod, rs)
 	if err != nil {
+		klog.Infof("Failed to get deployment: %v", err)
 		return false
 	}
 	depAnnotations := dep.GetObjectMeta().GetAnnotations()
