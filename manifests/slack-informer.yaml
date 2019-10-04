@@ -4,8 +4,8 @@ metadata:
   name: crash-informer
   namespace: default
 rules:
-- apiGroups: [""]
-  resources: ["pods", "pods/log", "replicationcontrollers"]
+- apiGroups: ["", "apps"]
+  resources: ["pods", "pods/log", "replicationcontrollers", "replicasets", "deployments"]
   verbs: ["get", "watch", "list"]
 ---
 apiVersion: v1
@@ -30,16 +30,16 @@ subjects:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: slack-informerr
+  name: slack-informer
   namespace: default
 spec:
   selector:
     matchLabels:
-      app: slack-informerr
+      app: slack-informer
   template:
     metadata:
       labels:
-        app: slack-informerr
+        app: slack-informer
     spec:
       restartPolicy: Always
       serviceAccountName: crash-informer
