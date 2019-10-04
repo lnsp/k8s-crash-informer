@@ -48,8 +48,8 @@ kubectl apply -f manifests/slack-informer.yaml
 
 You may want to update the `namespace` references, since the informer only watches a given namespace.
 
-### Step 3: Annotate pods
-To begin watching pods, you only have to add the following annotation to the pod spec.
+### Step 3: Annotate your Deployments, ReplicaSets or Pods
+To begin watching pods (or deployments or replica sets), you only have to add the following annotation to the spec.
 
 ```yaml
 annotations:
