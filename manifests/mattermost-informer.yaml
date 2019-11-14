@@ -53,16 +53,11 @@ spec:
               configMapKeyRef:
                 name: mattermost-informer-cfg
                 key: channel
-          - name: MATTERMOST_USER
+          - name: MATTERMOST_TOKEN
             valueFrom:
               configMapKeyRef:
                 name: mattermost-informer-cfg
-                key: user
-          - name: MATTERMOST_PASSWORD
-            valueFrom:
-              configMapKeyRef:
-                name: mattermost-informer-cfg
-                key: password
+                key: token
           - name: MATTERMOST_TEAM
             valueFrom:
               configMapKeyRef:

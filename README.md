@@ -10,17 +10,16 @@ This Kubernetes controller informs you when a Kubernetes Pod repeatedly dies (`C
 ```yaml
 apiVersion: v1
 data:
+  token: <bot-token>
   channel: <channel-name>
-  password: <your-user-password>
   team: <team-name>
   url: <your-mattermost-url>
-  user: <your-user>
 kind: ConfigMap
 metadata:
   name: mattermost-informer-cfg
 ```
 
-You should supply the user credentials of the bot, server URL, team and channel.
+You should supply the [token of the bot](https://docs.mattermost.com/developer/bot-accounts.html) (or a [personal access token of a user](https://docs.mattermost.com/developer/personal-access-tokens.html)), server URL, team and channel.
 
 ##### If you use Slack, use
 ```yaml
