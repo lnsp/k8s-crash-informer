@@ -7,6 +7,9 @@ rules:
 - apiGroups: [""]
   resources: ["pods", "pods/log", "replicationcontrollers"]
   verbs: ["get", "watch", "list"]
+- apiGroups: ["apps", "extensions"]
+  resources: ["replicasets", "deployments"]
+  verbs: ["get", "watch", "list"]
 ---
 apiVersion: v1
 kind: ServiceAccount
