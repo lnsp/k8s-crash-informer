@@ -4,8 +4,11 @@ metadata:
   name: crash-informer
   namespace: default
 rules:
-- apiGroups: ["", "apps"]
-  resources: ["pods", "pods/log", "replicationcontrollers", "replicasets", "deployments"]
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "replicationcontrollers"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: ["apps", "extensions"]
+  resources: ["replicasets", "deployments"]
   verbs: ["get", "watch", "list"]
 ---
 apiVersion: v1
