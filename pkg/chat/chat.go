@@ -22,15 +22,13 @@ type Client interface {
 }
 
 type MattermostConfig struct {
-	User          string
-	Password      string
+	Token         string
 	URL           string
 	Team, Channel string
 }
 
 type MattermostClient struct {
 	mattermost *model.Client4
-	user       *model.User
 	channel    *model.Channel
 }
 
@@ -92,10 +90,7 @@ func NewMattermostClientFromEnv() (*MattermostClient, error) {
 		return nil, err
 	}
 	client := model.NewAPIv4Client(cfg.URL)
-	user, resp := client.Login(cfg.User, cfg.Password)
-	if resp.Error != nil {
-		return nil, resp.Error
-	}
+	client.SetToken(cfg.Token)
 	team, resp := client.GetTeamByName(cfg.Team, "")
 	if resp.Error != nil {
 		return nil, resp.Error
@@ -104,7 +99,7 @@ func NewMattermostClientFromEnv() (*MattermostClient, error) {
 	if resp.Error != nil {
 		return nil, resp.Error
 	}
-	return &MattermostClient{client, user, channel}, nil
+	return &MattermostClient{client, channel}, nil
 }
 
 type SlackConfig struct {
