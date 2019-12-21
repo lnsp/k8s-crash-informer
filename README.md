@@ -1,5 +1,5 @@
 # k8s-crash-informer
-[![Build](https://github.com/lnsp/k8s-crash-informer/workflows/Go/badge.svg)](https://github.com/lnsp/k8s-crash-informer/actions?workflow=Go)
+[![Build](https://github.com/lnsp/k8s-crash-informer/workflows/Go/badge.svg)](https://github.com/lnsp/k8s-crash-informer/actions?workflow=Go) ![Docker Cloud](https://img.shields.io/docker/cloud/build/lnsp/crash-informer)
 
 This Kubernetes controller informs you when a Kubernetes Pod repeatedly dies (`CrashLoopBackOff`) while providing additional information like exit code and logs. **This is my first attempt at writing a Kubernetes controller, if you have any feedback please open an issue.**
 
