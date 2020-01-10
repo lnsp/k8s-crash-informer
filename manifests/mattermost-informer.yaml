@@ -33,16 +33,16 @@ subjects:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mattermost-informerr
+  name: mattermost-informer
   namespace: default
 spec:
   selector:
     matchLabels:
-      app: mattermost-informerr
+      app: mattermost-informer
   template:
     metadata:
       labels:
-        app: mattermost-informerr
+        app: mattermost-informer
     spec:
       restartPolicy: Always
       serviceAccountName: crash-informer
