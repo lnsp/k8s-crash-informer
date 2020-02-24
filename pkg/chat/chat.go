@@ -103,11 +103,11 @@ func NewMattermostClientFromEnv() (*MattermostClient, error) {
 	client.SetToken(cfg.Token)
 	team, resp := client.GetTeamByName(cfg.Team, "")
 	if resp.Error != nil {
-		return nil, resp.Error
+		return nil, fmt.Errorf("get team: %w", resp.Error)
 	}
 	channel, resp := client.GetChannelByName(cfg.Channel, team.Id, "")
 	if resp.Error != nil {
-		return nil, resp.Error
+		return nil, fmt.Errorf("get channel: %w", resp.Error)
 	}
 	return &MattermostClient{client, channel}, nil
 }
