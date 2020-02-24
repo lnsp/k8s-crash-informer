@@ -55,7 +55,10 @@ const (
 )
 
 func (c *Controller) hasValidAnnotation(pod *v1.Pod) bool {
-	podAnnotations := pod.GetObjectMeta().GetAnnotations()
+	podAnnotations := pod.ObjectMeta.Annotations
+	if podAnnotations == nil {
+		podAnnotations = make(map[string]string)
+	}
 	if podAnnotations[annotationEnableMattermost] == annotationEnableMattermostInform {
 		return true
 	}
@@ -65,7 +68,10 @@ func (c *Controller) hasValidAnnotation(pod *v1.Pod) bool {
 		klog.Infof("Failed to get replicaset: %v", err)
 		return false
 	}
-	rsAnnotations := rs.GetObjectMeta().GetAnnotations()
+	rsAnnotations := rs.ObjectMeta.Annotations
+	if rsAnnotations == nil {
+		rsAnnotations = make(map[string]string)
+	}
 	podAnnotations[annotationMattermostBackoff] = rsAnnotations[annotationMattermostBackoff]
 	if rsAnnotations[annotationEnableMattermost] == annotationEnableMattermostInform {
 		return true
@@ -75,7 +81,10 @@ func (c *Controller) hasValidAnnotation(pod *v1.Pod) bool {
 		klog.Infof("Failed to get deployment: %v", err)
 		return false
 	}
-	depAnnotations := dep.GetObjectMeta().GetAnnotations()
+	depAnnotations := dep.ObjectMeta.Annotations
+	if depAnnotations == nil {
+		depAnnotations = make(map[string]string)
+	}
 	podAnnotations[annotationMattermostBackoff] = depAnnotations[annotationMattermostBackoff]
 	return depAnnotations[annotationEnableMattermost] == annotationEnableMattermostInform
 }
