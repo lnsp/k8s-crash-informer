@@ -1,10 +1,11 @@
 package chat
 
 import (
+	"fmt"
+
 	"github.com/kelseyhightower/envconfig"
 	"github.com/mattermost/mattermost-server/model"
 	"github.com/nlopes/slack"
-	"github.com/pkg/errors"
 	"k8s.io/klog"
 )
 
@@ -70,17 +71,26 @@ type ClientConfig struct {
 
 // NewClientFromEnv instantiates a new chat client using env configuration.
 func NewClientFromEnv() (Client, error) {
-	var cfg ClientConfig
+	var (
+		cfg    ClientConfig
+		client Client
+		err    error
+	)
 	if err := envconfig.Process("informer", &cfg); err != nil {
 		return nil, err
 	}
 	switch cfg.Type {
 	case "mattermost":
-		return NewMattermostClientFromEnv()
+		client, err = NewMattermostClientFromEnv()
 	case "slack":
-		return NewSlackClientFromEnv()
+		client, err = NewSlackClientFromEnv()
+	default:
+		err = fmt.Errorf("unknown client type: %s", cfg.Type)
 	}
-	return nil, errors.Errorf("unknown client type: %v", cfg.Type)
+	if err != nil {
+		return nil, fmt.Errorf("create client from env: %w", err)
+	}
+	return client, nil
 }
 
 // NewMattermostClientFromEnv instantiates and configures a Mattermost client.
