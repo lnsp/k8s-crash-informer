@@ -52,7 +52,7 @@ To begin watching pods (or deployments or replica sets), you only have to add th
 
 ```yaml
 annotations:
-  espe.tech/crash-informer: true
+  espe.tech/crash-informer: "true"
 ```
 
 You may optionally set the backoff interval in seconds using `espe.tech/informer-backoff`.
