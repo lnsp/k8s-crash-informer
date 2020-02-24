@@ -248,6 +248,7 @@ github.com/mattermost/go-i18n v1.11.0 h1:1hLKqn/ZvhZ80OekjVPGYcCrBfMz+YxNNgqS+be
 github.com/mattermost/go-i18n v1.11.0/go.mod h1:RyS7FDNQlzF1PsjbJWHRI35exqaKGSO9qD4iv8QjE34=
 github.com/mattermost/gorp v2.0.0+incompatible h1:/aLYsuWjk4kSVP3P3kn3zTGNUQxaCB6DjTejmwddKEs=
 github.com/mattermost/gorp v2.0.0+incompatible/go.mod h1:0kX1qa3DOpaPJyOdMLeo7TcBN0QmUszj9a/VygOhDe0=
+github.com/mattermost/gorp v2.0.1-0.20190301154413-3b31e9a39d05+incompatible h1:FN4zK2wNig7MVVsOsGEZ+LeIq0gUcudn3LEGgbodMq8=
 github.com/mattermost/gorp v2.0.1-0.20190301154413-3b31e9a39d05+incompatible/go.mod h1:0kX1qa3DOpaPJyOdMLeo7TcBN0QmUszj9a/VygOhDe0=
 github.com/mattermost/ldap v3.0.4+incompatible h1:SOeNnz+JNR+foQ3yHkYqijb9MLPhXN2BZP/PdX23VDU=
 github.com/mattermost/ldap v3.0.4+incompatible/go.mod h1:b4reDCcGpBxJ4WX0f224KFY+OR0npin7or7EFpeIko4=

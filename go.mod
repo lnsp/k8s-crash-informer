@@ -2,7 +2,7 @@
 
 module github.com/lnsp/k8s-crash-informer
 
-go 1.12
+go 1.13
 
 require (
 	github.com/go-ldap/ldap v3.0.3+incompatible // indirect
