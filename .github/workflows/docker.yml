@@ -3,6 +3,7 @@ name: Docker
 on:
   push:
     branches: [master]
+    tags: ['*']
 
 env:
   REGISTRY: ghcr.io
