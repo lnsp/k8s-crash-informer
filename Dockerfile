@@ -8,10 +8,10 @@ RUN apk update && \
     mkdir -p "/build"
 
 WORKDIR /build
-COPY go.mod go.sum /build/
+COPY go.mod go.sum .
 RUN go mod download
 
-COPY . /build/
+COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} go build -a --installsuffix cgo --ldflags="-s" -o informer
 
 FROM alpine
