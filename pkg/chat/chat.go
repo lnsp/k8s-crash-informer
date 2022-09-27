@@ -136,13 +136,13 @@ func (client *SlackClient) Send(note *CrashNotification) {
 		slack.NewDividerBlock(),
 		slack.NewSectionBlock(&slack.TextBlockObject{
 			Type: slack.MarkdownType,
-			Text: "Logs\n```\n" + note.Logs + "\n```",
+			Text: "*Logs*\n```\n" + note.Logs + "\n```",
 		}, []*slack.TextBlockObject{}, nil),
 	}
 	if note.Reason != "" {
 		blocks = append(blocks, slack.NewSectionBlock(&slack.TextBlockObject{
 			Type: slack.MarkdownType,
-			Text: "Reason\n```\n" + note.Reason + "\n```",
+			Text: "*Reason*\n```\n" + note.Reason + "\n```",
 		}, []*slack.TextBlockObject{}, nil))
 	}
 	_, _, _, err := client.Client.SendMessage(client.Channel, slack.MsgOptionBlocks(blocks...))
