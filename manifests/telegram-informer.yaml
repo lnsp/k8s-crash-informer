@@ -1,0 +1,69 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: crash-informer
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "replicationcontrollers"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: ["apps", "extensions"]
+  resources: ["replicasets", "deployments"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: crash-informer
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: crash-informer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: crash-informer
+subjects:
+  - kind: ServiceAccount
+    name: crash-informer
+    namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegram-informer
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: telegram-informer
+  template:
+    metadata:
+      labels:
+        app: telegram-informer
+    spec:
+      restartPolicy: Always
+      serviceAccountName: crash-informer
+      containers:
+      - name: informer
+        image: ghcr.io/lnsp/k8s-crash-informer:master
+        imagePullPolicy: Always
+        env:
+          - name: TELEGRAM_CHATID
+            valueFrom:
+              configMapKeyRef:
+                name: telegram-informer-cfg
+                key: chatId
+          - name: TELEGRAM_TOKEN
+            valueFrom:
+              configMapKeyRef:
+                name: telegram-informer-cfg
+                key: token
+          - name: INFORMER_TYPE
+            value: telegram
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "100m"

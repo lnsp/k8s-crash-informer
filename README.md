@@ -34,6 +34,20 @@ metadata:
 
 You should use the Bot User OAuth Access Token as `token`. It can be copied from the Slack App admin interface after registering a new Slack API App and enabling the Bot feature.
 
+##### If you use Telegram, use
+
+```yaml
+apiVersion: v1
+data:
+  chatId: <chat-id>
+  token: <bot-token>
+kind: ConfigMap
+metadata:
+  name: telegram-informer-cfg
+```
+
+Extracting the chat ID in Telegram can be slightly finicky. The easiest way I've found is using the ID exposed in the URLs when using the web.telegram.org frontend.
+
 This step is required to create a valid configuration for our crash informer.
 
 ### Step 2: Deploy the informer
@@ -43,6 +57,9 @@ kubectl apply -f manifests/mattermost-informer.yaml
 
 # If you use Slack
 kubectl apply -f manifests/slack-informer.yaml
+
+# If you use Telegram
+kubectl apply -f manifests/telegram-informer.yaml
 ```
 
 You may want to update the `namespace` references, since the informer only watches a given namespace.
