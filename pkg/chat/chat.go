@@ -5,7 +5,7 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/mattermost/mattermost-server/v6/model"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 	"k8s.io/klog"
 )
 
@@ -124,28 +124,28 @@ type SlackClient struct {
 }
 
 func (client *SlackClient) Send(note *CrashNotification) {
-	attachment := slack.Attachment{
-		Color: "#AD2200",
-		Text:  note.Message,
-		Title: note.Title,
-		Fields: []slack.AttachmentField{
-			{
-				Title: "Logs",
-				Value: "```\n" + note.Logs + "```",
-			},
-		},
+	blocks := []slack.Block{
+		slack.NewHeaderBlock(&slack.TextBlockObject{
+			Type: slack.PlainTextType,
+			Text: note.Title,
+		}),
+		slack.NewSectionBlock(&slack.TextBlockObject{
+			Type: slack.MarkdownType,
+			Text: note.Message,
+		}, []*slack.TextBlockObject{}, nil),
+		slack.NewDividerBlock(),
+		slack.NewSectionBlock(&slack.TextBlockObject{
+			Type: slack.MarkdownType,
+			Text: "Logs\n```\n" + note.Logs + "\n```",
+		}, []*slack.TextBlockObject{}, nil),
 	}
 	if note.Reason != "" {
-		attachment.Fields = append(attachment.Fields, slack.AttachmentField{
-			Title: "Reason",
-			Value: note.Reason,
-		})
+		blocks = append(blocks, slack.NewSectionBlock(&slack.TextBlockObject{
+			Type: slack.MarkdownType,
+			Text: "Reason\n```\n" + note.Reason + "\n```",
+		}, []*slack.TextBlockObject{}, nil))
 	}
-	client.sendAttachments(attachment)
-}
-
-func (client *SlackClient) sendAttachments(attachments ...slack.Attachment) {
-	_, _, _, err := client.Client.SendMessage(client.Channel, slack.MsgOptionAttachments(attachments...))
+	_, _, _, err := client.Client.SendMessage(client.Channel, slack.MsgOptionBlocks(blocks...))
 	if err != nil {
 		klog.Warningf("Failed to notify Slack: %v", err)
 	}
