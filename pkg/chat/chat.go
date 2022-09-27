@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kelseyhightower/envconfig"
-	"github.com/mattermost/mattermost-server/model"
+	"github.com/mattermost/mattermost-server/v6/model"
 	"github.com/nlopes/slack"
 	"k8s.io/klog"
 )
@@ -59,9 +59,9 @@ func (client *MattermostClient) Send(note *CrashNotification) {
 func (client *MattermostClient) sendAttachments(attachements ...*model.SlackAttachment) {
 	post := &model.Post{ChannelId: client.channel.Id}
 	model.ParseSlackAttachment(post, attachements)
-	_, resp := client.mattermost.CreatePost(post)
-	if resp.Error != nil {
-		klog.Warningf("Failed to notify Mattermost: %v", resp.Error)
+	_, _, err := client.mattermost.CreatePost(post)
+	if err != nil {
+		klog.Warningf("Failed to notify Mattermost: %v", err)
 	}
 }
 
@@ -101,13 +101,14 @@ func NewMattermostClientFromEnv() (*MattermostClient, error) {
 	}
 	client := model.NewAPIv4Client(cfg.URL)
 	client.SetToken(cfg.Token)
-	team, resp := client.GetTeamByName(cfg.Team, "")
-	if resp.Error != nil {
-		return nil, fmt.Errorf("get team: %w", resp.Error)
+
+	team, _, err := client.GetTeamByName(cfg.Team, "")
+	if err != nil {
+		return nil, fmt.Errorf("get team: %w", err)
 	}
-	channel, resp := client.GetChannelByName(cfg.Channel, team.Id, "")
-	if resp.Error != nil {
-		return nil, fmt.Errorf("get channel: %w", resp.Error)
+	channel, _, err := client.GetChannelByName(cfg.Channel, team.Id, "")
+	if err != nil {
+		return nil, fmt.Errorf("get channel: %w", err)
 	}
 	return &MattermostClient{client, channel}, nil
 }

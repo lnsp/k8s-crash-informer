@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -92,7 +93,7 @@ func (c *Controller) hasValidAnnotation(pod *v1.Pod) bool {
 func (c *Controller) findPodReplicaSet(pod *v1.Pod) (*appsv1.ReplicaSet, error) {
 	for _, ref := range pod.GetOwnerReferences() {
 		if ref.Kind == "ReplicaSet" {
-			rs, err := c.clientset.AppsV1().ReplicaSets(pod.Namespace).Get(ref.Name, metav1.GetOptions{})
+			rs, err := c.clientset.AppsV1().ReplicaSets(pod.Namespace).Get(context.Background(), ref.Name, metav1.GetOptions{})
 			if err != nil {
 				return nil, fmt.Errorf("failed to retrieve owner ref: %w", err)
 			}
@@ -105,7 +106,7 @@ func (c *Controller) findPodReplicaSet(pod *v1.Pod) (*appsv1.ReplicaSet, error) 
 func (c *Controller) findPodDeployment(pod *v1.Pod, rs *appsv1.ReplicaSet) (*appsv1.Deployment, error) {
 	for _, ref := range rs.GetOwnerReferences() {
 		if ref.Kind == "Deployment" {
-			dep, err := c.clientset.AppsV1().Deployments(pod.Namespace).Get(ref.Name, metav1.GetOptions{})
+			dep, err := c.clientset.AppsV1().Deployments(pod.Namespace).Get(context.Background(), ref.Name, metav1.GetOptions{})
 			if err != nil {
 				return nil, fmt.Errorf("failed to retrieve owner ref: %w", err)
 			}
@@ -144,7 +145,7 @@ func (c *Controller) clearTimeout(pod *v1.Pod) {
 func (c *Controller) sendCrashNotification(pod *v1.Pod, container *v1.ContainerStatus) {
 	logs, _ := c.clientset.
 		CoreV1().Pods(pod.Namespace).
-		GetLogs(pod.Name, &v1.PodLogOptions{Container: container.Name}).Do().Raw()
+		GetLogs(pod.Name, &v1.PodLogOptions{Container: container.Name}).Do(context.Background()).Raw()
 	message := fmt.Sprintf("Container %s of pod %s keeps crashing, maybe its time to intervene.", container.Name, pod.Name)
 	note := &chat.CrashNotification{
 		Title:   "Crash loop detected!",
