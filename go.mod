@@ -5,9 +5,10 @@ module github.com/lnsp/k8s-crash-informer
 go 1.19
 
 require (
+	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mattermost/mattermost-server/v6 v6.3.10
-	github.com/nlopes/slack v0.6.0
+	github.com/slack-go/slack v0.11.3
 	k8s.io/api v0.25.2
 	k8s.io/apimachinery v0.25.2
 	k8s.io/client-go v0.25.2
