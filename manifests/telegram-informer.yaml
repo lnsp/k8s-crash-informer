@@ -33,16 +33,16 @@ subjects:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mattermost-informer
+  name: telegram-informer
   namespace: default
 spec:
   selector:
     matchLabels:
-      app: mattermost-informer
+      app: telegram-informer
   template:
     metadata:
       labels:
-        app: mattermost-informer
+        app: telegram-informer
     spec:
       restartPolicy: Always
       serviceAccountName: crash-informer
@@ -51,26 +51,18 @@ spec:
         image: ghcr.io/lnsp/k8s-crash-informer:master
         imagePullPolicy: Always
         env:
-          - name: MATTERMOST_CHANNEL
+          - name: TELEGRAM_CHATID
             valueFrom:
               configMapKeyRef:
-                name: mattermost-informer-cfg
-                key: channel
-          - name: MATTERMOST_TOKEN
+                name: telegram-informer-cfg
+                key: chatId
+          - name: TELEGRAM_TOKEN
             valueFrom:
               configMapKeyRef:
-                name: mattermost-informer-cfg
+                name: telegram-informer-cfg
                 key: token
-          - name: MATTERMOST_TEAM
-            valueFrom:
-              configMapKeyRef:
-                name: mattermost-informer-cfg
-                key: team
-          - name: MATTERMOST_URL
-            valueFrom:
-              configMapKeyRef:
-                name: mattermost-informer-cfg
-                key: url
+          - name: INFORMER_TYPE
+            value: telegram
         resources:
           limits:
             memory: "128Mi"

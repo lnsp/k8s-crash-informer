@@ -48,7 +48,7 @@ spec:
       serviceAccountName: crash-informer
       containers:
       - name: informer
-        image: ghcr.io/lnsp/k8s-crash-informer:v0.2.1
+        image: ghcr.io/lnsp/k8s-crash-informer:master
         imagePullPolicy: Always
         env:
           - name: SLACK_CHANNEL
