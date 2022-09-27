@@ -4,22 +4,38 @@ on:
   push:
     branches: [master]
 
-jobs:
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
+jobs:
   build:
- 
     runs-on: ubuntu-latest
- 
     steps:
-    - uses: actions/checkout@v1
-    - name: Docker
-      env:
-        REPOSITORY: docker.pkg.github.com
-        USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      run: |
-         COMMIT_ID=$(echo $GITHUB_SHA | head -c 6)
-         PKGID=$REPOSITORY/lnsp/k8s-crash-informer/informer:$COMMIT_ID
-         docker login -u $USERNAME -p $PASSWORD $REPOSITORY
-         docker build -f Dockerfile -t $PKGID .
-         docker push $PKGID
+    - uses: actions/checkout@v3
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    - name: Login to DockerHub
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+    - name: Determine short SHA
+      id: vars
+      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+    - name: Build and push
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
