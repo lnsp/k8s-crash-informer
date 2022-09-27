@@ -188,10 +188,8 @@ func (client *TelegramClient) Send(note *CrashNotification) {
 	contents := []entityMarker{
 		{"bold", note.Title},
 		{"", note.Message},
-		{"", "\n"},
 		{"bold", "Logs"},
 		{"pre", note.Logs},
-		{"", "\n"},
 		{"bold", "Reason"},
 		{"pre", note.Reason},
 	}
