@@ -17,7 +17,7 @@ metadata:
   name: crash-informer
   namespace: default
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: crash-informer
@@ -48,7 +48,7 @@ spec:
       serviceAccountName: crash-informer
       containers:
       - name: informer
-        image: ghcr.io/lnsp/k8s-crash-informer:latest
+        image: ghcr.io/lnsp/k8s-crash-informer:v0.2.1
         imagePullPolicy: Always
         env:
           - name: SLACK_CHANNEL
