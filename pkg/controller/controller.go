@@ -146,7 +146,7 @@ func (c *Controller) sendCrashNotification(pod *v1.Pod, container *v1.ContainerS
 	logs, _ := c.clientset.
 		CoreV1().Pods(pod.Namespace).
 		GetLogs(pod.Name, &v1.PodLogOptions{Container: container.Name}).Do(context.Background()).Raw()
-	message := fmt.Sprintf("Container %s of pod %s keeps crashing, maybe its time to intervene.", container.Name, pod.Name)
+	message := fmt.Sprintf("%s: Container %s of pod %s keeps crashing, maybe its time to intervene.", pod.Namespace, container.Name, pod.Name)
 	note := &chat.CrashNotification{
 		Title:   "Crash loop detected!",
 		Message: message,
